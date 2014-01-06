@@ -29,3 +29,9 @@ def get_key(username, password):
     """Returns an API Key, fetched via password."""
 
     return Heroku().request_key(username, password)
+
+def from_access_token(access_token, refresh_token = None):
+    """Returns a Heroku instance authenticated from an Oauth access token."""
+    h = Heroku()
+    h.authenticate_oauth(access_token, refresh_token)
+    return h

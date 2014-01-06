@@ -46,6 +46,11 @@ class HerokuCore(object):
 
         return self._verify_api_key()
 
+    def authenticate_oauth(self, access_token, refresh_token = None):
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self._session.headers['Authorization'] = "Bearer %s" % self.access_token
+        
     def request_key(self, username, password):
         r = self._http_resource(
             method='POST',

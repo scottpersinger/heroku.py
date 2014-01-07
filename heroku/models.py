@@ -117,7 +117,8 @@ class Addon(AvailableAddon):
     def delete(self):
         addon_name = self.name
         try:
-            addon_name = self.attachment_name
+            if self.attachment_name:
+                addon_name = self.attachment_name
         except:
             pass
         r = self._h._http_resource(

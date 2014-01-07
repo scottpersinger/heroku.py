@@ -27,3 +27,10 @@ con = theapp.addons.add("herokuconnect")
 con = theapp.addons.add("heroku-postgresql:dev")
 
 print theapp.config
+
+h2 = HerokuMock(version=3)
+print "Stored app config: %s" % h2.apps[theapp.name].config
+
+h.apps['cctrial'].addons.add("herokuconnect")
+h.apps['cctrial'].addons['herokuconnect'].delete()
+print "Cctrial addons: %s" % str(h.apps['cctrial'].addons)

@@ -2,10 +2,14 @@ import yaml
 import pdb
 import binascii
 import os
+from os.path import expanduser
+import os.path
+import json
 
 from .api import Heroku
 from .structures import KeyedListResource
-from .models import Addon
+from .models import Addon, App
+from .helpers import is_collection
 
 
 MOCK_DATA = """
@@ -23,26 +27,46 @@ apps:
 
 class HerokuMock(Heroku):
     data = yaml.load(MOCK_DATA)
+    DATA_FILE_NAME = expanduser("~/heroku_mock.yml")
 
     def __init__(self, version=None):
         self._addon_callable = {}
+        try:
+            HerokuMock.data = yaml.load(open(HerokuMock.DATA_FILE_NAME).read())
+        except IOError:
+            pass
+
         return super(HerokuMock, self).__init__(version=version)
+
+    def save_mock_data(self):
+        with open(HerokuMock.DATA_FILE_NAME, "w") as f:
+            f.write(yaml.dump(HerokuMock.data))
 
     def set_addon_configure(self, addon_name, callable):
         self._addon_callable[addon_name] = callable
 
+    def _matches(self, target, key):
+        return target.get('id',None) == key or target.get('name',None) == key
+
     def _find_resource(self, resource):
         top = HerokuMock.data
         for elt in resource:
-            if elt in top:
-                top = top[elt]
-            elif isinstance(top, (list, tuple)):
+            if isinstance(top, (list, tuple)):
+                match = None
                 for child in top:
-                    if ('id' in child and child['id'] == elt) or ('name' in child and child['name'] == elt):
-                        top = child
-                        break 
+                    if self._matches(child, elt):
+                        match = child
+                        break
+                top = match
+                if not top:
+                    raise KeyError(child)
             else:
-                raise ValueError("bad resource index %s" % elt)
+                if elt in top:
+                    top = top[elt]
+                else:
+                    empty = []
+                    top[elt] = empty
+                    top = empty
         return top
 
     def _get_resource(self, resource, obj, params=None, **kwargs):
@@ -59,7 +83,7 @@ class HerokuMock(Heroku):
 
 
     def _get_resources(self, resource, obj, params=None, map=None, **kwargs):
-        print "_get_resources (self: %s), resource: %s, obj: %s" % (str(self), str(resource), str(obj))
+        #print "_get_resources (self: %s), resource: %s, obj: %s" % (str(self), str(resource), str(obj))
 
         data = HerokuMock.data
 
@@ -70,7 +94,7 @@ class HerokuMock(Heroku):
         if resource in data:
             source = data[resource]
         else:
-            return []
+            source = []
 
         if isinstance(source, list):
             items = [obj.new_from_dict(item, h=self, **kwargs) for item in source]
@@ -89,22 +113,60 @@ class HerokuMock(Heroku):
 
     def _http_resource(self, method, resource, params=None, data=None):
         resource_path = list(resource)
-        child = resource_path.pop()
+        if len(resource_path) > 1:
+            child = resource_path.pop()
+        else:
+            try:
+                child = data["app[name]"]
+            except KeyError, TypeError:
+                child = ''
 
         resource = self._find_resource(resource_path)
-        new_obj = {'id': binascii.b2a_hex(os.urandom(8)), 'name': child}
-        resource.append(new_obj)
-        if resource_path[-1] == 'addons':
-            app = self._find_resource(resource_path[0:-1])
-            if child in self._addon_callable:
-                self._addon_callable[child](app, child)
 
-        return MockResponse()
+        if method == 'DELETE':
+            if isinstance(resource, dict):
+                del resource[child]
+            else:
+                for i, elt in enumerate(resource):
+                    if self._matches(elt, child):
+                        del resource[i]
+                        break
+        else:
+            new_obj = {'id': binascii.b2a_hex(os.urandom(8)), 'name': child, 'created_at': "2012-10-11T20:23:44Z"}
+
+            resource.append(new_obj)
+
+            if resource_path[-1] == 'addons':
+                app = self._find_resource(resource_path[0:-1])
+                if child in self._addon_callable:
+                    self._addon_callable[child](app, child)
+
+        self.save_mock_data()
+
+        return MockResponse({"name":child})
+
+    def lookup_obj(self, type_name):
+        if type_name == 'addons':
+            return Addon
+        elif type_name == 'apps':
+            return App
+        else:
+            raise TypeError("Unknown path type '%s'" % type_name)
 
 class MockResponse(object):
+    def __init__(self, params):
+        self._content = json.dumps(params)
+
+    @property
+    def content(self):
+        return self._content
+
     def raise_for_status(self):
         pass
 
+    @property
+    def ok(self):
+        return True
 
 
 

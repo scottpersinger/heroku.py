@@ -8,6 +8,7 @@ This module contians the helpers.
 """
 
 from datetime import datetime
+import inspect
 
 from dateutil.parser import parse as parse_datetime
 
@@ -124,3 +125,9 @@ def to_api(in_dict, int_keys=None, date_keys=None, bool_keys=None):
             del in_dict[k]
 
     return in_dict
+
+def patch_models_version3():
+    from heroku.models import Domain, Addon
+    Domain._strs += [field for field in Domain._ints if 'id' in field] + ['hostname']
+    Domain._ints = [field for field in Domain._ints if 'id' not in field]
+    Addon._strs += ['id']

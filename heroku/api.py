@@ -8,7 +8,7 @@ This module provides the basic API interface for Heroku.
 """
 
 from .compat import json
-from .helpers import is_collection
+from .helpers import is_collection, patch_models_version3
 from .models import *
 from .structures import KeyedListResource
 from heroku.models import Feature
@@ -20,7 +20,7 @@ HEROKU_URL = 'https://api.heroku.com'
 
 class HerokuCore(object):
     """The core Heroku class."""
-    def __init__(self, session=None):
+    def __init__(self, session=None, version=None):
         super(HerokuCore, self).__init__()
         if session is None:
             session = requests.session()
@@ -32,7 +32,13 @@ class HerokuCore(object):
         self._session = session
 
         # We only want JSON back.
-        self._session.headers.update({'Accept': 'application/json'})
+        if version is not None:
+            if version == 3:
+                patch_models_version3()
+            version = "; version=%d" % version
+        else:
+            version = ''
+        self._session.headers.update({'Accept': 'application/vnd.heroku+json%s' % version})
 
     def __repr__(self):
         return '<heroku-core at 0x%x>' % (id(self))
@@ -50,7 +56,7 @@ class HerokuCore(object):
         self.access_token = access_token
         self.refresh_token = refresh_token
         self._session.headers['Authorization'] = "Bearer %s" % self.access_token
-        
+
     def request_key(self, username, password):
         r = self._http_resource(
             method='POST',
@@ -102,6 +108,7 @@ class HerokuCore(object):
         url = self._url_for(*resource)
         r = self._session.request(method, url, params=params, data=data)
 
+        print r.text
         if r.status_code == 422:
             http_error = HTTPError('%s Client Error: %s' % (r.status_code, r.content))
             http_error.response = r
@@ -139,8 +146,8 @@ class HerokuCore(object):
 class Heroku(HerokuCore):
     """The main Heroku class."""
 
-    def __init__(self, session=None):
-        super(Heroku, self).__init__(session=session)
+    def __init__(self, session=None, version=None):
+        super(Heroku, self).__init__(session=session, version=version)
 
     def __repr__(self):
         return '<heroku-client at 0x%x>' % (id(self))

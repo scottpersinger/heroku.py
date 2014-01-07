@@ -12,7 +12,7 @@ from .structures import *
 from urllib import quote
 import json
 import requests
-
+import pdb
 
 
 class BaseResource(object):
@@ -132,6 +132,7 @@ class Addon(AvailableAddon):
             resource=('apps', self.app.name, 'addons', name)
         )
         r.raise_for_status()
+
         return self.app.addons[name]
 
     def upgrade(self, name):
@@ -152,8 +153,8 @@ class Addon(AvailableAddon):
 class App(BaseResource):
     """Heroku App."""
 
-    _strs = ['name', 'create_status', 'stack', 'repo_migrate_status']
-    _ints = ['id', 'slug_size', 'repo_size', 'dynos', 'workers']
+    _strs = ['name', 'create_status', 'stack', 'repo_migrate_status','id']
+    _ints = ['slug_size', 'repo_size', 'dynos', 'workers']
     _dates = ['created_at',]
     _pks = ['name', 'id']
 

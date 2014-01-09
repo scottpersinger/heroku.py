@@ -60,7 +60,7 @@ class HerokuCore(object):
 
     def _refresh_access_token(self):
         if hasattr(self, 'refresh_token') and hasattr(self, 'oauth_secret'):
-            r = self._session.request('POST', 'https://id.heroku.com/oauth/token',
+            r = self._session.request('POST', self._heroku_url + '/oauth/token',
                                             {'grant_type':'refresh_token',
                                              'refresh_token':self.refresh_token,
                                              'client_secret':self.oauth_secret})

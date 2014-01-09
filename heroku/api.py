@@ -35,10 +35,9 @@ class HerokuCore(object):
         if version is not None:
             if version == 3:
                 patch_models_version3()
-            version = "; version=%d" % version
+            self._session.headers.update({'Accept': 'application/vnd.heroku+json; version=%d' % version})
         else:
-            version = ''
-        self._session.headers.update({'Accept': 'application/vnd.heroku+json%s' % version})
+            self._session.headers.update({'Accept': 'application/json'})
 
     def __repr__(self):
         return '<heroku-core at 0x%x>' % (id(self))

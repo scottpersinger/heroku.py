@@ -48,28 +48,33 @@ class HerokuMock(Heroku):
     def _matches(self, target, key):
         return target.get('id',None) == key or target.get('name',None) == key
 
+    def _find_element(self, container, elt):
+        if isinstance(container, (list, tuple)):
+            match = None
+            for child in container:
+                if self._matches(child, elt):
+                    match = child
+                    break
+            container = match
+            if not container:
+                raise KeyError(child)
+        else:
+            if elt in container:
+                container = container[elt]
+            else:
+                empty = []
+                container[elt] = empty
+                container = empty
+        return container
+
     def _find_resource(self, resource):
         top = HerokuMock.data
         for elt in resource:
-            if isinstance(top, (list, tuple)):
-                match = None
-                for child in top:
-                    if self._matches(child, elt):
-                        match = child
-                        break
-                top = match
-                if not top:
-                    raise KeyError(child)
-            else:
-                if elt in top:
-                    top = top[elt]
-                else:
-                    empty = []
-                    top[elt] = empty
-                    top = empty
+            top = self._find_element(top, elt)
         return top
 
     def _get_resource(self, resource, obj, params=None, **kwargs):
+        #print "_get_resource (self: %s), resource: %s, obj: %s" % (str(self), str(resource), str(obj))
         data = HerokuMock.data
         if type(resource) is tuple:
             data = self._find_resource(list(resource)[0:-1])
@@ -77,7 +82,7 @@ class HerokuMock(Heroku):
 
         result = None
         try:    
-            return obj.new_from_dict(data[resource], h=self, **kwargs)
+            return obj.new_from_dict(self._find_element(data, resource), h=self, **kwargs)
         except KeyError:
             return obj.new_from_dict({}, h=self, **kwargs)
 

@@ -31,8 +31,8 @@ def get_key(username, password):
 
     return Heroku().request_key(username, password)
 
-def from_access_token(access_token, refresh_token = None, version=None):
+def from_access_token(access_token, refresh_token = None, oauth_secret=None, version=None):
     """Returns a Heroku instance authenticated from an Oauth access token."""
     h = Heroku(version=version)
-    h.authenticate_oauth(access_token, refresh_token=refresh_token)
+    h.authenticate_oauth(access_token, refresh_token=refresh_token, oauth_secret=oauth_secret)
     return h

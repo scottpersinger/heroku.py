@@ -52,10 +52,27 @@ class HerokuCore(object):
 
         return self._verify_api_key()
 
-    def authenticate_oauth(self, access_token, refresh_token = None):
+    def authenticate_oauth(self, access_token, refresh_token = None, oauth_secret=None):
         self.access_token = access_token
         self.refresh_token = refresh_token
+        self.oauth_secret = oauth_secret
         self._session.headers['Authorization'] = "Bearer %s" % self.access_token
+
+    def _refresh_access_token(self):
+        if hasattr(self, 'refresh_token') and hasattr(self, 'oauth_secret'):
+            r = self._session.request('POST', 'https://id.heroku.com/oauth/token',
+                                            {'grant_type':'refresh_token',
+                                             'refresh_token':self.refresh_token,
+                                             'client_secret':self.oauth_secret})
+            if r.status_code == 200:
+                j = r.json()
+                self.access_token = j['access_token']
+                self.refresh_token = j['refresh_token']
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def request_key(self, username, password):
         r = self._http_resource(
@@ -108,7 +125,11 @@ class HerokuCore(object):
         url = self._url_for(*resource)
         r = self._session.request(method, url, params=params, data=data)
 
-        print r.text
+        if r.status_code == 401:
+            if self._refresh_access_token():
+                r = self._session.request(method, url, params=params, data=data)
+                raise NewOauthToken(r, self.access_token, self.refresh_token)
+
         if r.status_code == 422:
             http_error = HTTPError('%s Client Error: %s' % (r.status_code, r.content))
             http_error.response = r
@@ -168,6 +189,18 @@ class Heroku(HerokuCore):
     def labs(self):
         return self._get_resources(('features'), Feature, map=filtered_key_list_resource_factory(lambda obj: obj.kind == 'user'))
         
+
+
+class NewOauthToken(Exception):
+    """Returned when a requested failed due to an old access token, but a new one was retrieved and
+       the original request successfully re-executed. Use 'access_token' and 'refresh_token' to
+       get the new token values, and 'original_response' to get the successful response.
+       """
+    def __init__(self, response, access_token, refresh_token):
+        super(NewOauthToken, self).__init__("Request retrieved a new oauth access token")
+        self.original_response = response
+        self.access_token = access_token
+        self.refresh_token = refresh_token
 
 
 class ResponseError(ValueError):

@@ -127,7 +127,16 @@ def to_api(in_dict, int_keys=None, date_keys=None, bool_keys=None):
     return in_dict
 
 def patch_models_version3():
-    from heroku.models import Domain, Addon
+    from heroku.models import Domain, Addon, ConfigVars, App
     Domain._strs += [field for field in Domain._ints if 'id' in field] + ['hostname']
     Domain._ints = [field for field in Domain._ints if 'id' not in field]
     Addon._strs += ['id']
+
+    def v3_config(self):
+        return self._h._get_resource(
+            resource=('apps', self.name, 'config-vars'),
+            obj=ConfigVars,
+            app=self)
+    App.config = property(v3_config)
+
+

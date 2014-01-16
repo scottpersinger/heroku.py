@@ -30,6 +30,7 @@ class HerokuCore(object):
         self._api_key_verified = None
         self._heroku_url = HEROKU_URL
         self._session = session
+        self._version = version
 
         # We only want JSON back.
         if version is not None:

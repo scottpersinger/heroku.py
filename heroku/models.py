@@ -128,10 +128,17 @@ class Addon(AvailableAddon):
         return r.ok
 
     def new(self, name):
-        r = self._h._http_resource(
-            method='POST',
-            resource=('apps', self.app.name, 'addons', name)
-        )
+        if self._h._version == 3:
+            r = self._h._http_resource(
+                method='POST',
+                resource=('apps', self.app.name, 'addons'),
+                data={"plan":name}
+            )
+        else:
+            r = self._h._http_resource(
+                method='POST',
+                resource=('apps', self.app.name, 'addons', name)
+            )
         r.raise_for_status()
 
         return self.app.addons[name]

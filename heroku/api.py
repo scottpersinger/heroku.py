@@ -30,6 +30,7 @@ class HerokuCore(object):
         self._api_key_verified = None
         self._heroku_url = HEROKU_URL
         self._session = session
+        session.trust_env = False
         self._version = version
 
         # We only want JSON back.

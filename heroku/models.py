@@ -127,16 +127,18 @@ class Addon(AvailableAddon):
         )
         return r.ok
 
-    def new(self, name):
+    def new(self, name, params=None):
         if self._h._version == 3:
             r = self._h._http_resource(
                 method='POST',
                 resource=('apps', self.app.name, 'addons'),
+                params=params,
                 data={"plan":name}
             )
         else:
             r = self._h._http_resource(
                 method='POST',
+                params=params,
                 resource=('apps', self.app.name, 'addons', name)
             )
         r.raise_for_status()
@@ -161,7 +163,7 @@ class Addon(AvailableAddon):
 class App(BaseResource):
     """Heroku App."""
 
-    _strs = ['name', 'create_status', 'stack', 'repo_migrate_status','id']
+    _strs = ['name', 'create_status', 'stack', 'repo_migrate_status','id','region']
     _ints = ['slug_size', 'repo_size', 'dynos', 'workers']
     _dates = ['created_at',]
     _pks = ['name', 'id']

@@ -25,3 +25,4 @@ __version__ = '0.2.0'
 # Module namespace.
 
 from .core import from_key, get_key, from_pass, from_access_token
+from .api import InvalidTokenError

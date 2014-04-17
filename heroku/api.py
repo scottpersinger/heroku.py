@@ -17,6 +17,8 @@ import requests
 
 HEROKU_URL = 'https://api.heroku.com'
 
+class InvalidTokenError(requests.HTTPError):
+    pass
 
 class HerokuCore(object):
     """The core Heroku class."""
@@ -131,6 +133,9 @@ class HerokuCore(object):
             http_error = HTTPError('%s Client Error: %s' % (r.status_code, r.content))
             http_error.response = r
             raise http_error
+
+        if r.status_code == 401 or r.status_code == 403:
+            raise InvalidTokenError(r.text, response=r)
         
         r.raise_for_status()
 

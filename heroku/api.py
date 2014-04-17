@@ -62,7 +62,7 @@ class HerokuCore(object):
     def refresh_access_token(self):
         """Call this if you get a 401 and want to retrieve a new access token"""
         if hasattr(self, 'refresh_token') and hasattr(self, 'oauth_secret'):
-            r = self._session.request('POST', self._heroku_url + '/oauth/token',
+            r = self._session.request('POST', 'https://id.heroku.com/oauth/token',
                                             {'grant_type':'refresh_token',
                                              'refresh_token':self.refresh_token,
                                              'client_secret':self.oauth_secret})

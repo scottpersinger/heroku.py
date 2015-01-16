@@ -143,7 +143,7 @@ class Addon(AvailableAddon):
             )
         r.raise_for_status()
 
-        return self.app.addons[name]
+        return self.app.addons[r.json()['name']]
 
     def upgrade(self, name):
         """Upgrades an addon to the given tier."""

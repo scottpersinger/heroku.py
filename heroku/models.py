@@ -95,21 +95,21 @@ class AvailableAddon(BaseResource):
 
     _strs = ['name', 'description', 'url', 'state']
     _bools = ['beta',]
-    _pks = ['name']
+    _pks = ['plan']
 
     def __repr__(self):
-        return "<available-addon '{0}'>".format(self.name)
+        return "<available-addon '{0}'>".format(self.plan['name'])
 
     @property
     def type(self):
-        return self.name.split(':')[0]
+        return self.plan['name'].split(':')[0]
 
 
 class Addon(AvailableAddon):
     """Heroku Addon."""
 
     _pks = ['name', 'type']
-    _strs = ['name', 'description', 'url', 'state', 'attachment_name']
+    _strs = ['plan', 'name', 'description', 'url', 'state', 'attachment_name']
 
     def __repr__(self):
         return "<addon '{0}'>".format(self.name)
@@ -127,13 +127,13 @@ class Addon(AvailableAddon):
         )
         return r.ok
 
-    def new(self, name, params=None):
+    def new(self, plan_name, params=None):
         if self._h._version == 3:
             r = self._h._http_resource(
                 method='POST',
                 resource=('apps', self.app.name, 'addons'),
                 params=params,
-                data={"plan":name}
+                data={"plan": plan_name}
             )
         else:
             r = self._h._http_resource(
@@ -145,19 +145,19 @@ class Addon(AvailableAddon):
 
         return self.app.addons[r.json()['name']]
 
-    def upgrade(self, name):
+    def upgrade(self, plan_name):
         """Upgrades an addon to the given tier."""
         # Allow non-namespaced upgrades. (e.g. advanced vs logging:advanced)
-        if ':' not in name:
-            name = '{0}:{1}'.format(self.type, name)
+        if ':' not in plan_name:
+            plan_name = '{0}:{1}'.format(self.type, plan_name)
 
         r = self._h._http_resource(
-            method='PUT',
-            resource=('apps', self.app.name, 'addons', quote(name)),
-            data=' '   # Server weirdness.
+            method='PATCH',
+            resource=('apps', self.app.name, 'addons', quote(self.name)),
+            data=json.dumps({'plan': plan_name})
         )
         r.raise_for_status()
-        return self.app.addons[name]
+        return self.app.addons[self.name]
 
 
 class App(BaseResource):

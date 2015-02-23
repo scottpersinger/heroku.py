@@ -157,7 +157,7 @@ class Addon(AvailableAddon):
             data=json.dumps({'plan': plan_name})
         )
         r.raise_for_status()
-        return self.app.addons[self.name]
+        return self.app.addons[r.json()['name']]
 
 
 class App(BaseResource):

@@ -95,14 +95,14 @@ class AvailableAddon(BaseResource):
 
     _strs = ['name', 'description', 'url', 'state']
     _bools = ['beta',]
-    _pks = ['plan']
+    _pks = ['name']
 
     def __repr__(self):
-        return "<available-addon '{0}'>".format(self.plan['name'])
+        return "<available-addon '{0}'>".format(self.name)
 
     @property
     def type(self):
-        return self.plan['name'].split(':')[0]
+        return self.name.split(':')[0]
 
 
 class Addon(AvailableAddon):
@@ -114,6 +114,10 @@ class Addon(AvailableAddon):
 
     def __repr__(self):
         return "<addon '{0}'>".format(self.name)
+
+    @property
+    def type(self):
+        return self.plan['name'].split(':')[0]
 
     def delete(self):
         addon_name = self.name

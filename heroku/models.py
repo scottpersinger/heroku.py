@@ -109,7 +109,8 @@ class Addon(AvailableAddon):
     """Heroku Addon."""
 
     _pks = ['name', 'type']
-    _strs = ['plan', 'name', 'description', 'url', 'state', 'attachment_name']
+    _strs = ['name', 'description', 'url', 'state', 'attachment_name', 'config_vars']
+    _dicts = ['plan']
 
     def __repr__(self):
         return "<addon '{0}'>".format(self.name)
@@ -250,7 +251,7 @@ class App(BaseResource):
             resource=('apps', self.name),
             obj=App,
         )
-        
+
     @property
     def labs(self):
         return self._h._get_resources(
@@ -608,14 +609,14 @@ class Feature(BaseResource):
     _strs = ['name', 'kind', 'summary', 'docs',]
     _bools = ['enabled']
     _pks = ['name']
-    
+
     def __init__(self):
         self.app = None
         super(Feature, self).__init__()
 
     def __repr__(self):
         return "<feature '{0}'>".format(self.name)
-    
+
     def enable(self):
         r = self._h._http_resource(
             method='POST',
@@ -623,7 +624,7 @@ class Feature(BaseResource):
             params={'app': self.app.name if self.app else ''}
         )
         return r.ok
-    
+
     def disable(self):
         r = self._h._http_resource(
             method='DELETE',

@@ -1,3 +1,7 @@
+NOTICE
+=======
+This fork of heroku.py is deprecated. The original has not been properly updated to work with Heroku API v3, and as such neither has this fork.
+
 Heroku.py
 =========
 
